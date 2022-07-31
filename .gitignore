@@ -1,0 +1,9 @@
+# Django #
+__pycache__
+watchmate/db.sqlite3
+ 
+# User-specific stuff
+watchmate/.idea/
+
+# Environments    
+menv/
