@@ -1,7 +1,8 @@
 # from rest_framework.decorators import api_view
+from django.shortcuts import get_object_or_404
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import status, mixins, generics
+from rest_framework import status, mixins, generics, viewsets
 from .serializers import WatchListSerializer, StreamPlatformSerializer, ReviewSerializer
 from watchlist_app.models import WatchList, StreamPlatform, Review
 
@@ -52,6 +53,18 @@ class ReviewDetail(generics.RetrieveUpdateDestroyAPIView):
 #
 #     def post(self, request, *args, **kwargs):
 #         return self.create(request, *args, **kwargs)
+
+class StreamPlatformVS(viewsets.ViewSet):
+    def list(self, request):
+        queryset = StreamPlatform.objects.all()
+        serializer = StreamPlatformSerializer(queryset, many=True)
+        return Response(serializer.data)
+
+    def retrieve(self, request, pk):
+        queryset = StreamPlatform.objects.all()
+        watchlist = get_object_or_404(queryset, pk=pk)
+        serializer = StreamPlatformSerializer(watchlist)
+        return Response(serializer.data)
 
 
 class StreamPlatformAV(APIView):
