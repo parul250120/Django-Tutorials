@@ -54,7 +54,7 @@ class ReviewDetail(generics.RetrieveUpdateDestroyAPIView):
 #     def post(self, request, *args, **kwargs):
 #         return self.create(request, *args, **kwargs)
 
-class StreamPlatformVS(viewsets.ModelViewSet):
+class StreamPlatformVS(viewsets.ReadOnlyModelViewSet):
     queryset = StreamPlatform.objects.all()
     serializer_class = StreamPlatformSerializer
 
