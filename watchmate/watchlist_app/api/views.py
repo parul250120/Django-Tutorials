@@ -1,9 +1,12 @@
 # from rest_framework.decorators import api_view
 from django.shortcuts import get_object_or_404
 from rest_framework.exceptions import ValidationError
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, mixins, generics, viewsets
+
+from .permissions import AdminOrReadOnly, ReviewUserOrReadOnly
 from .serializers import WatchListSerializer, StreamPlatformSerializer, ReviewSerializer
 from watchlist_app.models import WatchList, StreamPlatform, Review
 
@@ -24,11 +27,17 @@ class ReviewCreate(generics.CreateAPIView):
         if review_queryset.exists():
             raise ValidationError("You have already reviewed this movie")
 
+        watchlist.avg_rating = (watchlist.avg_rating * watchlist.number_rating + serializer.validated_data[
+            'rating']) / (watchlist.number_rating + 1)
+        watchlist.number_rating += 1
+        watchlist.save()
+
         serializer.save(watchlist=watchlist, review_user=review_user)
 
 
 class ReviewList(generics.ListAPIView):
     serializer_class = ReviewSerializer
+    permission_classes = [AdminOrReadOnly]
 
     def get_queryset(self):
         pk = self.kwargs['pk']
@@ -38,6 +47,7 @@ class ReviewList(generics.ListAPIView):
 class ReviewDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset = Review.objects.all()
     serializer_class = ReviewSerializer
+    permission_classes = [ReviewUserOrReadOnly]
 
 
 # class ReviewDetail(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.DestroyModelMixin, generics.GenericAPIView):
