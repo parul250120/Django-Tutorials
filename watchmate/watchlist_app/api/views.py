@@ -1,16 +1,29 @@
 # from rest_framework.decorators import api_view
 from django.shortcuts import get_object_or_404
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.throttling import UserRateThrottle, AnonRateThrottle, ScopedRateThrottle
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import status, mixins, generics, viewsets
+from rest_framework import status, mixins, generics, viewsets, filters
 
 from .permissions import AdminOrReadOnly, ReviewUserOrReadOnly
 from .serializers import WatchListSerializer, StreamPlatformSerializer, ReviewSerializer
 from watchlist_app.models import WatchList, StreamPlatform, Review
 from .throttling import ReviewListThrottle, ReviewCreateThrottle
+
+
+class UserReview(generics.ListAPIView):
+    serializer_class = ReviewSerializer
+
+    # def get_queryset(self):
+    #     username = self.kwargs['username']
+    #     return Review.objects.filter(review_user__username=username)
+
+    def get_queryset(self):
+        username = self.request.query_params.get('username', None)
+        return Review.objects.filter(review_user__username=username)
 
 
 class ReviewCreate(generics.CreateAPIView):
@@ -44,6 +57,8 @@ class ReviewList(generics.ListAPIView):
     serializer_class = ReviewSerializer
     permission_classes = [IsAuthenticated]
     throttle_classes = [ReviewListThrottle, AnonRateThrottle]
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['review_user__username', 'active']
 
     def get_queryset(self):
         pk = self.kwargs['pk']
@@ -176,6 +191,16 @@ class StreamPlatformDetailsAV(APIView):
             return Response({'error': 'Not found'}, status=status.HTTP_404_NOT_FOUND)
         platform.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+# for searching(test purpose only)
+class WatchListGV(generics.ListAPIView):
+    queryset = WatchList.objects.all()
+    serializer_class = WatchListSerializer
+    # filter_backends = [filters.SearchFilter]
+    # search_fields = ['title', 'platform__name']
+    filter_backends = [filters.OrderingFilter]
+    ordering_fields = ['avg_rating']
 
 
 class WatchListAV(APIView):
